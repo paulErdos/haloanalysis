@@ -86,8 +86,14 @@ def read():
   #4. Return blocks
   return [labels, second_block]
 
+def min(a, b):
+  if a > b: 
+    return b
+  else:
+    return a
+
 #so we have each block
-[block1, block] = read()
+[block1, block2] = read()
 
 #define directional keys
 up_key = ','
@@ -96,11 +102,41 @@ down_key = 'o'
 #give an exit signal
 exit_string = 'exit'
 
+#we'll need an index in a moment
+n = 0
+
+#this will also be handy
+length_of_smaller_list = min(len(block1), len(block2))
+
 #let the user run as long as they need
-while true:
+while True:
+ #-1. Clear
+  call(["clear"]) 
+
+  #0. Apply a loop constant to n
+  n = n % length_of_smaller_list
+
   #1. Print nth list elements
+  print block1[n]
+  print block2[n] 
+
   #2. Get input
-  #3. update n
-  #4. clear
+  print "\nScroll u/d with ,/o. 'exit' to exit."
+  input = raw_input("Enter command and press return: ")
+
+  #3. Respond to input
+  if input == "exit":
+    print "\'Bye!\n"
+    call(["clear"])
+    exit()
+  elif input == ',':
+    if n == 0:
+      n = (length_of_smaller_list - 1)
+    else:
+      n = n - 1
+  elif input == 'o':
+    n = n + 1
+  else:
+    print 'what\n'
 
 
