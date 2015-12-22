@@ -23,6 +23,9 @@ import sys
 #to use regular expressions
 import re
 
+def print_help():
+  print "Usage: python write_halo_object.py [input file]"
+
 def read():
   """
   1. Read file
@@ -37,9 +40,13 @@ def read():
   
   #create a list to hold blocks that are themselves lists
   blocks = []
- 
-  #get filename
-  filename = sys.argv[len(sys.argv) - 1]
+
+  #get filename as long as the program is called correctly
+  if len(sys.argv) == 2:
+    filename = sys.argv[len(sys.argv) - 1]
+  else:
+    print_help() 
+    exit(0)
 
   #then as long as it's actually a file
   if os.path.isfile(filename):
@@ -58,9 +65,9 @@ def read():
   first_block = lines[0][1:]
   second_block = lines[1:-1]
 
-  #3. Split first block on whitespace
-  labels = re.split(' ', first_block)
-
+  #3. Split first block on whitespace and trim off trailing ')'
+  labels = re.split('\) ', first_block)
+  
   #4. Return blocks
   return [labels, second_block]
 
@@ -73,5 +80,12 @@ def min(a, b):
 #so we have each block
 [block1, block2] = read()
 
-for thing in block1:
+for thing in block1: 
   print thing
+
+
+
+
+
+
+
