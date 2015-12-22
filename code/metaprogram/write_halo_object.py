@@ -65,9 +65,16 @@ def read():
   first_block = lines[0][1:]
   second_block = lines[1:-1]
 
-  #3. Split first block on whitespace and trim off trailing ')'
+  #3. Replace reserved characters and split first block on 
+  #   whitespace and trim off trailing ')'
+  first_block = re.sub('\(', '_', first_block)
+  #but neglect the added newline
   labels = re.split('\) ', first_block)
-  
+ 
+  #3.5 Remove trailing newlines in block2
+  for i in xrange(0, len(second_block)):
+    second_block[i] = second_block[i].rstrip()
+ 
   #4. Return blocks
   return [labels, second_block]
 
@@ -80,12 +87,44 @@ def min(a, b):
 #so we have each block
 [block1, block2] = read()
 
-for thing in block1: 
-  print thing
+#sanity check
+if len(block1) != len(block2):
+  print "Error: Blocks have different sizes:"
+  print "Block 1 size: " + str(len(block1))
+  print "Block 2 size: " + str(len(block2))
+  print "Quitting!\n"
+  exit()
 
+#begin to write the class
+print "class Halo:"
 
+#now define the init function
+init_head = "  def __init__(self, "
 
+#Now we need to list all the variables. There are 76 in all.
+#So we need a string to store them in
+init_body = ', '.join(block1)
 
+#rstrip it to remove the trailing newline added by join
+init_body = init_body.rstrip()
 
+#now select all but the trailing comma 
+init_body = init_body[0:-1]
 
+#now close it
+init_tail = '):'
 
+#and join them
+def_init_string = init_head + init_body + init_tail
+
+#now print and add a newline so it looks nice
+print def_init_string + '\n'
+
+#now we need to print
+#'    #description'
+#'    self.whatever = whatever'
+#over and over again
+for index in xrange(0, len(block1)):
+  print "    " + block2[index]
+  print "    self." + block1[index] + " = " + block1[index]
+  print
