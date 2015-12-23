@@ -55,7 +55,6 @@ def read():
     #like if the code crashes before the file gets closed
     with open(filename) as f:
       
-      #see if we're good so far by trying to print lines
       for line in f:
         lines.append(line)
 

@@ -10,22 +10,21 @@
 # file, each array element on a line.
 ##  
 
-#For numerical analysis                                                 
-import numpy as np                                                            
+#For numerical analysis
+import numpy as np
 import math
-                                                                       
-#For visualization                                                      
-import matplotlib.pyplot as pyp                                         
-                                                                        
-#For manipulating command-line arguments                                
-import sys                                                              
-                                                                        
-#For handling files                                                      
+
+#For visualization
+import matplotlib.pyplot as pyp                                                                                                
+#For manipulating command-line arguments
+import sys
+
+#For handling files
 import os 
                                                               
-#For using regular expressions                                          
-import re                                                               
-                                                                        
+#For using regular expressions
+import re                                                       
+
 def init():
 	#Check for proper number of arguments, die if necessary
 	#max args = 2 + number of valid options
