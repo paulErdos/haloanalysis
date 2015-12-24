@@ -20,6 +20,10 @@
 #      various cosmic web structural features
 ##
 
+#To use the gigantic halo class definition without needing to
+#paste it in here and clutter everything up
+from halo_object import Halo
+
 #for handling files
 import os
 
@@ -69,7 +73,10 @@ def read_Behroozi_catalog():
       for line in file:
         #we want to ignore lines that start with '#'
         if line[0] != '#':
-          lines.append(line)
+          #then trim off the trailing newline
+          line = line.rstrip()
+          #and split by separator and add to list
+          lines.append(line.split(' '))
 
   return lines
 
@@ -96,13 +103,40 @@ def read_web_catalog():
       for line in file:
         #we want to ignore lines that start with '#'
         if line[0] != '#':
-          lines.append(line)
+          #now trim off the trailing newline
+          line = line.rstrip()
+          #These are csv, and we want to store each datum 
+          #(from each file) as a list element so split on
+          #commas
+          lines.append(line.split(','))
 
   return lines
       
+#Make sure the program is called properly and read in the 
+#data we'll be using
 init()
 h_list = read_Behroozi_catalog()
 web_list = read_web_catalog()
 
-for line in web_list:
-  print line
+#sanity check
+if len(h_list) != len(web_list):
+  print "Error: files have different number of lines."
+  print "Quitting!"
+  exit()
+
+#there's probably a better way to do this that involves numpy
+#which I should probably be using
+#Join the lists at the seam. Join into hlist because that's 
+#how this data is intended anyway
+for i in xrange(0, len(h_list)):
+  h_list[i] = h_list[i] + web_list[i]
+
+#now instantiate halo objects
+halo_list = []
+for halo_data in h_list:
+  #this gives Halo() only two arguments. Probably need to 
+  #redefine the halo class. 
+  halo_list.append(Halo(halo_data))
+
+
+
