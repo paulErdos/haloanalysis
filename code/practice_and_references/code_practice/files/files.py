@@ -10,8 +10,14 @@ import itertools
 filename1 = sys.argv[1]
 filename2 = sys.argv[2]
 
+i = 0
+
 if os.path.isfile(filename1) and os.path.isfile(filename2):
   with open(filename1) as file1:
     with open(filename2) as file2:
       for thing1, thing2 in itertools.izip(file1, file2):
-        print thing1, thing2
+          print i
+          print thing1
+          print thing2
+          raw_input()
+          i = i + 1
