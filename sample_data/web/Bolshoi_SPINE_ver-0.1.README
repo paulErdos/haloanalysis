@@ -1,0 +1,38 @@
+
+
+Spine classification of Bolshoi halos.
+
+Halo catalog: hlist_1.00230.list
+
+COLUMNS:
+
+wall1, wall2, wall3, fila1, fila2, fila3, dist1, dist2, dist3
+
+wall1: 1 id halo is inside wall     mask @ 1 Mpc smoothing
+wall2: 1 id halo is inside wall     mask @ 2 Mpc smoothing
+wall3: 1 id halo is inside wall	    mask @ 4 Mpc smoothing
+
+fila1: 1 id halo is inside filament mask @ 1 Mpc smoothing
+fila2: 1 id halo is inside filament mask @ 2 Mpc smoothing
+fila3: 1 id halo is inside filament mask @ 4 Mpc smoothing
+
+dist1: approximate distance from halo to closest Spine element (wall+filament+cluster) @ 1 Mpc smoothing. Units in voxels (250Mpc/1024pix)
+dist2: approximate distance from halo to closest Spine element (wall+filament+cluster) @ 2 Mpc smoothing. Units in voxels (250Mpc/1024pix)
+dist3: approximate distance from halo to closest Spine element (wall+filament+cluster) @ 4 mpc smoothing. Units in voxels (250Mpc/1024pix)
+
+Note that since the Spine is one-voxel thick we have to dilate it in order to give it a more realistic thickness. For the time being I 
+did a fast global dilation (only for filaments) as follows:
+
+fila1: 1 pix, ~0.75 Mpc diameter
+fila2: 2 pix, ~1.25 Mpc diameter
+fila3: 2 pix, ~1.25 Mpc diameter
+
+
+
+
+
+
+
+
+
+
