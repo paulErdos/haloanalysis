@@ -10,8 +10,8 @@ filename = sys.argv[1]
 masses = []
 radii = []
 
-#for tracking progress
-lines_seen = 0
+#for progress tracking
+line_count = 0
 
 if os.path.isfile(filename):
   with open(filename) as file:
@@ -19,10 +19,14 @@ if os.path.isfile(filename):
       values = line.rstrip().split(',')
     
       #virial mass is in column 10
-      masses.append(values[10])
+      masses.append(float(values[10]))
 
       #virial radius is in column 11
-      radii.append(values[11])
+      radii.append(float(values[11]))
+
+      line_count = line_count + 1
+      if line_count % 1000000 == 0:
+        print line_count
 
 #compute and print mean
 total_mass = 0
