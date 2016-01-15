@@ -3,4 +3,7 @@ class Nonspecific_Thing:
     self.foo = foo
 
 x = Nonspecific_Thing(1)
+y = Nonspecific_Thing(2.6)
+
 print x.foo
+print y.foo

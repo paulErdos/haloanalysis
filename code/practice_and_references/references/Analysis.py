@@ -15,7 +15,8 @@ import numpy as np
 import math
 
 #For visualization
-import matplotlib.pyplot as pyp                                                                                                
+import matplotlib.pyplot as pyp
+
 #For manipulating command-line arguments
 import sys
 
@@ -23,7 +24,7 @@ import sys
 import os 
                                                               
 #For using regular expressions
-import re                                                       
+import re
 
 def init():
 	#Check for proper number of arguments, die if necessary
