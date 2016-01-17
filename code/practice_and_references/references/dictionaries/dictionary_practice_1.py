@@ -18,7 +18,6 @@ dictionary2 = {
 dictionary_list = [dictionary, dictionary2]
 
 key0 = 0
-key1 = 1
 
 for dict in dictionary_list:
   for item in dict.items():

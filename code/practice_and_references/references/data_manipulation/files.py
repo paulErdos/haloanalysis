@@ -7,6 +7,15 @@ import sys
 #so we can iterate over both files at once using izip
 import itertools
 
+if len(sys.argv) != 3:
+  print "Usage: $ python program.py input1 input2"
+  exit()
+
+for i in [1,2]:
+  if not os.path.isfile(sys.argv[i]):
+    print "Error: problem with " + sys.argv[i] + "."
+    exit()
+ 
 filename1 = sys.argv[1]
 filename2 = sys.argv[2]
 

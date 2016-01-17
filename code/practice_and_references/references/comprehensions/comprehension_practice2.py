@@ -16,7 +16,8 @@ halo7 = [1, 1, 0]
 
 catalog = [halo1, halo2, halo3, halo4, halo5, halo6, halo7]
 
-filament_masses = [x[mass] for x in catalog if x[in_filament] == 1]
+filament_masses = [x[mass] for x in catalog \
+                  if x[in_filament] == 1]
 wall_masses = [x[mass] for x in catalog if x[in_wall] == 1]
 
 print stats.ttest_ind(filament_masses, wall_masses)
