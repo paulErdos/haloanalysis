@@ -15,11 +15,13 @@
 import os
 import sys
 
-if len(sys.argv) != 3:
-  print "Usage: $ python first_few_lines.py in.csv out.csv"
+if len(sys.argv) != 4:
+  print "Usage: $ python program_name.py <# of lines> in out"
+  exit()
 
-inputfilename = sys.argv[1]
-outputfilename = sys.argv[2]
+number_of_lines = int(sys.argv[1])
+inputfilename = sys.argv[2]
+outputfilename = sys.argv[3]
 
 if not os.path.isfile(inputfilename):
   print "Error: " + inputfilename + " is not a file!"
@@ -34,7 +36,8 @@ index = 0
 with open(inputfilename) as input:
   with open(outputfilename, 'w') as output:
     for line in input:
-      if index == 100:
+      if index == number_of_lines:
         exit()
       output.write(line)
       index = index + 1
+      if index % 100 == 0: print index
