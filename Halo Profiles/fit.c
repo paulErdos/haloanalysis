@@ -25,6 +25,7 @@ typedef struct {
 	int nb;
 	int ppb;
 	double edges[MAX_BINS];
+	double radii[MAX_BINS];
 	double profile[MAX_BINS];
 } Halo;
 
@@ -87,12 +88,17 @@ void fill_halo(char * line, Halo * h) {
 		}
 	}
 	
-	//Compute density profile
-	//what are our distance units?
-	for(i = 0; i < h->nb; i++) 
+	for(i = 0; i < h->nb; i++) { 
+		//fill an array with the actual density profile for each 
+		//bin. Here we assume spherical symmetry, although I think
+		//this is inconsequential.
 		h->profile[i] = actual_density(h->edges[i],
 						h->edges[i + 1],
 						h->ppb);
+
+		//fill radii array with midpoints of each bin
+		h->radii[i] = (h->edges[i] + h->edges[i + 1]) / 2;
+	}
 }
 
 FILE * init(int argc, char ** argv) {
@@ -306,14 +312,16 @@ int main(int argc, char ** argv)
 
 	f = init(argc, argv);
 	create_halos(f, halos);
-//	test(halos);
 
-	//compute_error_volume(10, 40, 10, 10, 40, 10, 2, halos[5]);
+	//test that halo is formed correctly
+	int i;
+	for(i = 0; i < halos[8].nb; i++)
+		printf("density: %f, radius: %f\n", halos[8].profile[i], halos[8].radii[i]);
 
 //	int i;
 //	for(i = 0; i < NUM_HALOS; i++){
 //		if(halos[i].nb < 30) continue;
-		compute_error_volume(500, 5000, 1, 10000, 20000, 1, 750, &halos[8]);
+//		compute_error_volume(500, 5000, 1, 10000, 20000, 1, 750, &halos[8]);
 //	}
 
 	fclose(f);
