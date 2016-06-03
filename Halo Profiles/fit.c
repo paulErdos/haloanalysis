@@ -308,7 +308,6 @@ int main(int argc, char ** argv)
 	int i;
 	for(i = 0; i < NUM_HALOS; i++)
 		compute_error_volume(0, 1000, 1, &halos[i]);
-	printf("TRIVIAL DIFFERENCE TO SEE HOW BRANCHING WORKS\N");
 	fclose(f);
 	return 0;
 }
