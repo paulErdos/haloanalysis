@@ -305,7 +305,7 @@ int main(int argc, char ** argv)
 	f = init(argc, argv);
 	create_halos(f, halos);
 
-	printf("test");
+	printf("test2");
 
 	int i;
 	for(i = 0; i < NUM_HALOS; i++)
