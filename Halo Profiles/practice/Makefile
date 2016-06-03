@@ -1,6 +1,11 @@
 CFLAGS=-Wall -g
 
-all: array
+all: array truth
+
+array: array
+
+truth: truth
 
 clean:
 	rm -rf array
+	rm -rf truth

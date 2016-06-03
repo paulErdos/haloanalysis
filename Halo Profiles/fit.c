@@ -4,6 +4,7 @@
 #include <math.h>
 #include <assert.h>
 
+#define TEST_MODE 1
 #define MAX_BINS 50
 #define NUM_HALOS 100 //7152277
 #define PARTICLE_MASS 154966000 // Msun/h
@@ -166,143 +167,130 @@ double non_integer_modulus(double dividend, double divisor) {
 	return dividend;
 }
 
+void free_data(double *** data, int xlen, int ylen)
+{
+        size_t i, j;
+
+        for (i = 0; i < xlen; i++) {
+                if(data[i] != NULL) {
+                        for (j = 0; j < ylen; j++)
+                                free(data[i][j]);
+                        free(data[i]);
+                }   
+        }   
+}
+
+double *** alloc_data(size_t xlen, size_t ylen, size_t zlen)
+{
+        double ***p;
+        size_t i, j;
+
+        if((p = malloc(xlen * sizeof(*p))) == NULL) {
+                perror("malloc 1");
+                return NULL;
+        }
+
+        for(i = 0; i < xlen; i++)
+                p[i] = NULL;
+
+        for(i = 0; i < xlen; i++)
+                if((p[i] = malloc(ylen * sizeof(*p[i]))) == NULL) {
+                        perror("Malloc 2");
+                        free_data(p, xlen, ylen);
+                        return NULL;
+                }
+
+        for(i = 0; i < xlen; i++) {
+                for(j = 0; j < ylen; j++) {
+                        p[i][j] = NULL;
+                }
+        }
+
+        for(i = 0; i < xlen; i++)
+                for(j = 0; j < ylen; j++)
+                        if((p[i][j] = malloc(zlen * sizeof(*p[i][j]))) == NULL) {
+                                perror("malloc 3");
+                                return NULL;
+                        }
+
+        return p;
+
+}
+
 //We only care about rho and rs right now. Gamma is 2.
-void compute_error_volume(double rho_start, double rho_stop, double rho_step, 
-			  double rs_start, double rs_stop, double rs_step,
-			  double gamma, Halo * h) {
-	int i;	
-	double rhodist = rho_stop - rho_start;
-	double rsdist = rs_stop - rs_start;
-//	double gdist = g_stop - g_start;
+void compute_error_volume(double g_start, double g_stop, double g_step, Halo * h) {
 
+	int i, j, k;	
 	
-
-	//check if the range we're looking across fits into an integral
-	//number of steps, and adjust as necessary
-	double remainder;
-	if(rho_step > 1) {	
-		//check rho
-		remainder = non_integer_modulus(rhodist, rho_step);
-		if(remainder != 0) rhodist += (rho_step - remainder);
+	//check gamma. Imagine if g_start were 0, g_step were 5, and 
+        //g_stop were 17. We wouldn't get all the requested range, so 
+	//we would need to adjust g_stop to 20.
+	double remainder, g_dist = g_stop - g_start;
+	if(g_step > 1) {
+		remainder = non_integer_modulus(g_dist, g_step);
+		if(remainder != 0) g_dist += (g_step - remainder);
+		assert(non_integer_modulus(g_dist, g_step) == 0.0);
 	}
-	if(rs_step > 1) {
-	//check rs
-		remainder = non_integer_modulus(rsdist, rs_step);
-		if(remainder != 0) rsdist += (rs_step - remainder);
-	}
-	//check gamma
-//	remainder = non_integer_modulus(gdist, g_step);
-//	if(remainder != 0) gdist += (g_step - remainder);
 	//now the range fits into an integer number of steps
+	int gsteps = g_dist / g_step;
+	int rhosteps = h->nb;
+	int rssteps = h->nb;
 
+	//so alloc a space for it 
+	double *** errvol = alloc_data(rhosteps, rssteps, gsteps);
 	
-	//so now we declare the volume
-	int rhosteps = rhodist / rho_step;
-	int rssteps = rsdist / rs_step;
-// 	int gsteps = gdist / g_step;
-
-	
-	//allocate memory for this giant thing
-	//first the rows
-	double ** errvol;
-	if((errvol = malloc(sizeof(double) * rhosteps)) == NULL) 
-		die("Unable to allocate memory for error surface / volume.\n");		
-	//then the columns
-	for(i = 0; i < rhosteps; i++) 
-		if((errvol[i] = malloc(sizeof(double) * rssteps)) == NULL)
-			die("Unable to allocate memory for error surface / volume.\n");		
-	
-	//we'll also need to know the degrees of freedom later
-	double dof = 0;
-	if(rho_step != 0) dof++;
-	if(rs_step != 0) dof++;
-//	if(g_step != 0) dof++;
+	//we'll need to know the degrees of freedom
+	double dof = 2; // because we know we're varying rho_0 and rs
+	if(g_step != 0) dof++;
 	
 	//now we need to scan across the ranges and check NFW against
 	//the actual density, take the square of the residual, and
 	//keep track of the sum of residuals until we get to the end.
 	//then handle dof and return.
 	//and then fill it with chi squares
-	
-	double activitymarker = 0;
-	double rh, rs, r, residual, chi_sq;
-	//scan across rho range
-	for(rh = rho_start; rh < (rho_start + rhodist); rh += rho_step) {
-	  //scan across rs range
-	  printf("\r%f %% complete! Steps taken: %.0f", 100*activitymarker/rhosteps, activitymarker);
-	  activitymarker++;
-	  for(rs = rs_start; rs < (rs_start + rsdist); rs += rs_step) {
-	    //scan across gamma range
-//	    for(g = g_start; g < (g_start + gdist); g += g_step) {
-	      //Now for these values of rho, rs, and gamma, we can find
-	      //the nfw profile.
-	      //From this, we compute chi sq between the actual and the 
-	      //expected, then store the result in the error volume
-	      chi_sq = 0;
-	      for(i = 0; i < h->nb; i++) {
-		//find average radius in current bin
-		r = (h->edges[i] + h->edges[i + 1]) / 2;
-		//compute the residual
-		residual = h->profile[i] - nfw(rh, rs, gamma, r);
-		
+
+	int trigger = 1;
+	double best_rs, best_rho_0, best_g, smallest;
+	double g, rho_0, rs, r, chi, residual;
+	for(i = 0; i < h->nb; i++) { rs = h->radii[i];
+	  for(j = 0; j < h->nb; j++) { rho_0 = h->profile[j];
+	    for(g = g_start; g < (g_start + g_dist); g += g_step) {
+	      chi = 0;
+	      for(k = 0; k < h->nb; k++) { r = h->radii[k];
+		//compute the residual (actual density - expected)
+		residual = h->profile[i] - nfw(rho_0, rs, g, r);
 		//square it
 		residual = pow(residual, 2);
 		//and throw it on the pile
-		chi_sq += residual;
+		chi += residual;
 	      }
-              //now we scale the chi squared value by degrees of freedom
-	      //minus one
-	      chi_sq *= (dof - 1);
-	      //and store it in the error volume
-	      //so we convert coords to ints
-	      int rhcoord = (rh - rho_start) / rho_step;
-	      int rscoord = (rs - rs_start) / rs_step;
-	      errvol[rhcoord][rscoord] = chi_sq;
-	  }
-	
-	}
+	      //now we want to store the sum in the error volume
+	      chi /= (dof - 1);
+	      int g_coord = (g - g_start) / g_step;
+              errvol[i][j][g_coord] = chi;
 
-	//Now that we havethe error volume we want to find the 
-	//coordinates of the min. 
-	// just want the coordinates of the mininmum vaule.
-	int j; double min = errvol[0][0];
-	int rhocoord, rscoord;
-	for(i = 0; i < rhosteps; i++) {
-		for(j = 0; j < rssteps; j++) {
-			if(errvol[i][j] < min && errvol[i][j] != 0) {
-				min = errvol[i][j];
-				rhocoord = i;
-				rscoord = j;
-			}
-		}
-	}
+	      //we can save some computation time later by tracking the 
+	      //smallest value here
+	      //let's take the first value to start off with
+  	      if(trigger) {
+	  	  trigger = 0;
+		  smallest = chi;
+	      }
+	      if(chi < smallest) {
+	  	  smallest = chi;
+		  best_rs = rs;
+		  best_rho_0 = rho_0;
+		  best_g = g;
+	      }
+	    }
+  	  }
+        }
 
-	double best_rho = rho_start + rhocoord * rho_step;
-	double best_rs = rs_start + rscoord * rs_step;
-	
-	printf("Bam. Done.\n");
-	printf("nbins: %d\n", h->nb);	
-	printf("best chi squared: %f\n", min);
-	printf("best rho: %f\nbest_rs: %f\n\n",best_rho, best_rs);
-	printf("Actual\tExpected\n");
-	for(i = 0; i < h->nb; i++) {
-		//find average radius in current bin
-		r = (h->edges[i] + h->edges[i + 1]) / 2;
-		//compute the residual
-		printf("%f\t%f\n", h->profile[i], nfw(best_rho, best_rs, gamma, r));
-	} printf("\n\n");
-
-	//now print it to make sure this works at all
-	//we'll go horiz axis is rs
-/*
-	for(i = 0; i < rhosteps; i++) {
-		//print out a line of rho
-//		printf("rho = %.0f\t: ", i * rho_step + rho_start);
-		for(j = 0; j < rssteps; j++) {
-			printf("%14.7f ", errvol[i][j]);
-		} printf("\n");
+	if(TEST_MODE) {
+		printf("best_rs: %f\nbest_rho_0: %f\nbest_g: %f\n",
+				best_rs, best_rho_0, best_g);
+		printf("Best chi: %f\n", smallest);
 	}
-*/
 }
 
 int main(int argc, char ** argv) 
@@ -313,16 +301,7 @@ int main(int argc, char ** argv)
 	f = init(argc, argv);
 	create_halos(f, halos);
 
-	//test that halo is formed correctly
-	int i;
-	for(i = 0; i < halos[8].nb; i++)
-		printf("density: %f, radius: %f\n", halos[8].profile[i], halos[8].radii[i]);
-
-//	int i;
-//	for(i = 0; i < NUM_HALOS; i++){
-//		if(halos[i].nb < 30) continue;
-//		compute_error_volume(500, 5000, 1, 10000, 20000, 1, 750, &halos[8]);
-//	}
+	compute_error_volume(0, 1000, 1, &halos[8]);
 
 	fclose(f);
 	return 0;
