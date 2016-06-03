@@ -6,7 +6,7 @@
 
 #define TEST_MODE 1
 #define MAX_BINS 50
-#define NUM_HALOS 100 //7152277
+#define NUM_HALOS 100//7152277
 #define PARTICLE_MASS 154966000 // Msun/h
 
 //HaloID ParentID Mass Radius Vmax X Y Z VX VY VZ NP N_Rbins PPBin R0 .. RN
@@ -287,10 +287,14 @@ void compute_error_volume(double g_start, double g_stop, double g_step, Halo * h
         }
 
 	if(TEST_MODE) {
+		printf("%d %6.0f\n", h->nb, best_g);
+/*
+		printf("Halo %d\n", h->halo_id);
+		printf("Number of bins: %d\n", h->nb);
 		printf("best_rs: %f\nbest_rho_0: %f\nbest_g: %f\n",
 				best_rs, best_rho_0, best_g);
-		printf("Best chi: %f\n", smallest);
-	}
+		printf("Best chi: %f\n\n", smallest);
+*/	}
 }
 
 int main(int argc, char ** argv) 
@@ -301,8 +305,10 @@ int main(int argc, char ** argv)
 	f = init(argc, argv);
 	create_halos(f, halos);
 
-	compute_error_volume(0, 1000, 1, &halos[8]);
-
+	int i;
+	for(i = 0; i < NUM_HALOS; i++)
+		compute_error_volume(0, 1000, 1, &halos[i]);
+	printf("TRIVIAL DIFFERENCE TO SEE HOW BRANCHING WORKS\N");
 	fclose(f);
 	return 0;
 }
