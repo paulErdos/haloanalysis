@@ -305,6 +305,8 @@ int main(int argc, char ** argv)
 	f = init(argc, argv);
 	create_halos(f, halos);
 
+	printf("test");
+
 	int i;
 	for(i = 0; i < NUM_HALOS; i++)
 		compute_error_volume(0, 1000, 1, &halos[i]);
