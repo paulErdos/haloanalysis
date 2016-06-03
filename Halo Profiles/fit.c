@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
+#include <mpi.h>
 
 #define TEST_MODE 1
 #define MAX_BINS 50
@@ -301,15 +302,14 @@ int main(int argc, char ** argv)
 {
 	static Halo halos[NUM_HALOS];
 	FILE * f = NULL;
-
 	f = init(argc, argv);
 	create_halos(f, halos);
 
-	printf("test2");
-
+	#pragma omp parallel for
 	int i;
 	for(i = 0; i < NUM_HALOS; i++)
 		compute_error_volume(0, 1000, 1, &halos[i]);
+
 	fclose(f);
 	return 0;
 }
