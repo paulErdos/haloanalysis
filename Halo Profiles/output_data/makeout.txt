@@ -1,0 +1,30 @@
+fit.c: In function ‘compute_error_volume’:
+fit.c:322:20: error: ‘rho_start’ undeclared (first use in this function)
+  double best_rho = rho_start + rhocoord * rho_step;
+                    ^
+fit.c:322:20: note: each undeclared identifier is reported only once for each function it appears in
+fit.c:322:32: error: ‘rhocoord’ undeclared (first use in this function)
+  double best_rho = rho_start + rhocoord * rho_step;
+                                ^
+fit.c:322:43: error: ‘rho_step’ undeclared (first use in this function)
+  double best_rho = rho_start + rhocoord * rho_step;
+                                           ^
+fit.c:323:19: error: ‘rs_start’ undeclared (first use in this function)
+  double best_rs = rs_start + rscoord * rs_step;
+                   ^
+fit.c:323:30: error: ‘rscoord’ undeclared (first use in this function)
+  double best_rs = rs_start + rscoord * rs_step;
+                              ^
+fit.c:323:40: error: ‘rs_step’ undeclared (first use in this function)
+  double best_rs = rs_start + rscoord * rs_step;
+                                        ^
+fit.c:327:35: error: ‘min’ undeclared (first use in this function)
+  printf("best chi squared: %f\n", min);
+                                   ^
+fit.c:334:3: error: incompatible type for argument 3 of ‘nfw’
+   printf("%f\t%f\n", h->profile[i], nfw(best_rho, best_rs, gamma, r));
+   ^
+fit.c:153:8: note: expected ‘double’ but argument is of type ‘double (*)(double)’
+ double nfw(double rho_0, double rs, double gamma, double radius) {
+        ^
+make: *** [all] Error 1
