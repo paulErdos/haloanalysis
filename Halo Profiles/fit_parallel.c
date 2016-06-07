@@ -29,6 +29,9 @@ typedef struct {
 	double edges[MAX_BINS];
 	double radii[MAX_BINS];
 	double profile[MAX_BINS];
+	double best_rs;
+	double best_rho_0;
+	double best_g;
 } Halo;
 
 void die(char * message) {
@@ -287,15 +290,9 @@ void compute_error_volume(double g_start, double g_stop, double g_step, Halo * h
   	  }
         }
 
-	if(TEST_MODE) {
-		printf("%d %6.0f\n", h->nb, best_g);
-/*
-		printf("Halo %d\n", h->halo_id);
-		printf("Number of bins: %d\n", h->nb);
-		printf("best_rs: %f\nbest_rho_0: %f\nbest_g: %f\n",
-				best_rs, best_rho_0, best_g);
-		printf("Best chi: %f\n\n", smallest);
-*/	}
+	h->best_rs = best_rs;
+	h->best_rho_0 = best_rho_0;
+	h->best_g = best_g;
 }
 
 int main(int argc, char ** argv) 
@@ -305,16 +302,14 @@ int main(int argc, char ** argv)
 	f = init(argc, argv);
 	create_halos(f, halos);
 
-	int tid;
 	int i;
-	#pragma omp parallel for private(tid)
-	for(i = 0; i < NUM_HALOS; i++) {
-		tid = omp_get_thread_num();
-		printf("hello from thread %d "
-			"processing halo %d\n", tid, i);
+	#pragma omp parallel for
+	for(i = 0; i < NUM_HALOS; i++) 
 		compute_error_volume(0, 1000, 1, &halos[i]);
-	}
 
 	fclose(f);
+
+	//write
+
 	return 0;
 }
