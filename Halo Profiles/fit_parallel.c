@@ -157,7 +157,7 @@ void create_halos(FILE * f, Halo * halos) {
 
 double nfw(double rho_0, double rs, double gamma, double radius) {
 	double x = radius / rs;
-	return 4*rho_0/(x * pow((1 + x), gamma));
+	return pow(gamma, 2)*rho_0/(x * pow((1 + x), gamma));
 }
 
 //finds dividend % divisor by interpreting divisor as an integer
@@ -293,6 +293,9 @@ void compute_error_volume(double g_start, double g_stop, double g_step, Halo * h
 	h->best_rs = best_rs;
 	h->best_rho_0 = best_rho_0;
 	h->best_g = best_g;
+
+	if(TEST_MODE)
+		printf("best rs: %f\tbest_rho_0: %f\tbest_g: %f\n", best_rs, best_rho_0, best_g);	
 }
 
 int main(int argc, char ** argv) 
