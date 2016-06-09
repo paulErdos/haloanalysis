@@ -154,7 +154,7 @@ void create_halos(FILE * f, Halo * halos) {
 
 double nfw(double rho_0, double rs, double gamma, double radius) {
 	double x = radius / rs;
-	return 4*rho_0/(x * pow((1 + x), gamma));
+	return pow(2, gamma)*rho_0/(x * pow((1 + x), gamma));
 }
 
 //finds dividend % divisor by interpreting divisor as an integer
@@ -288,7 +288,7 @@ void compute_error_volume(double g_start, double g_stop, double g_step, Halo * h
         }
 
 	if(TEST_MODE) {
-		printf("%d %6.0f\n", h->nb, best_g);
+		printf("best_g: %f\n", best_g);
 /*
 		printf("Halo %d\n", h->halo_id);
 		printf("Number of bins: %d\n", h->nb);
@@ -305,15 +305,10 @@ int main(int argc, char ** argv)
 	f = init(argc, argv);
 	create_halos(f, halos);
 
-	int tid;
-	omp_set_num_threads(2);
 	int i;
 //	#pragma omp parallel for private(tid)
 	for(i = 0; i < NUM_HALOS; i++) {
-		tid = omp_get_thread_num();
-		printf("hello from thread %d "
-			"processing halo %d\n", tid, i);
-		compute_error_volume(0, 1000, 1, &halos[i]);
+		compute_error_volume(0, 5, 0.1, &halos[i]);
 	}
 
 	fclose(f);
