@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <omp.h>
 
-#define TEST_MODE 0
+#define TEST_MODE 1
 #define MAX_BINS 50
 #define NUM_HALOS 1000//7152277
 #define PARTICLE_MASS 154966000 // Msun/h
@@ -32,8 +32,6 @@ typedef struct {
 	double best_rs;
 	double best_rho_0;
 	double best_g;
-	double min_density;
-	double max_density;
 } Halo;
 
 void die(char * message) {
@@ -106,19 +104,6 @@ void fill_halo(char * line, Halo * h) {
 		//fill radii array with midpoints of each bin
 		h->radii[i] = (h->edges[i] + h->edges[i + 1]) / 2;
 	}
-
-	double min_density = h->profile[0];
-	double max_density = h->profile[0];
-	for(i = 0; i < h->nb; i++) {
-		//track min
-		if(h->profile[i] < min_density) min_density = h->profile[i];
-		//track max
-		if(h->profile[i] > max_density) max_density = h->profile[i];
-	}
-
-	h->min_density = min_density;
-	h->max_density = max_density;
-	h->best_g = -1;
 }
 
 FILE * init(int argc, char ** argv) {
@@ -236,26 +221,17 @@ double *** alloc_data(size_t xlen, size_t ylen, size_t zlen)
 
 }
 
-void marker(int i) {
-	printf("marker %d\n", i);
-}
-
 //We only care about rho and rs right now. Gamma is 2.
-void compute_error_volume(double g_start, double g_stop, double g_step, 
-			  double rs_step, double rho_step, double r_step, Halo * h) {
+void compute_error_volume(double g_start, double g_stop, double g_step, Halo * h) {
 
 	int i, j, k; //i: rs, j: rho_0
 	double dof = 3; // because three free parameters
-	double rs_dist = h->radius;
-	double rho_dist = h->max_density - h->min_density;
 	double g_dist = g_stop - g_start;
 
 	//find out how big we need the error volume to be
-	int rssteps = rs_dist / rs_step;
-	int rhosteps = rho_dist / rho_step;
+	int rssteps = h->nb;
+	int rhosteps = h->nb;
 	int gsteps = g_dist / g_step;
-//	int rhosteps = h->nb;
-//	int rssteps = h->nb;
 
 	//so alloc a space for the array we're storing chi_square values in
 	double *** errvol = alloc_data(rssteps, rhosteps, gsteps);
@@ -273,21 +249,20 @@ void compute_error_volume(double g_start, double g_stop, double g_step,
 	double smallchi = 613613354238530000;
 
 	//scan across all radii
-//	for(i = 0; i < h->nb; i++) { rs = h->radii[i];
-	for(i = 0, rs = 1; i < rssteps; rs += rs_step, i++) {
+	for(i = 0; i < h->nb; i++) { rs = h->radii[i];
 		//scan across all density values
-//		for(j = 0; j < h->nb; j++) { rho_0 = h->profile[j]; 
-		for(j = 0, rho_0 = h->min_density; j < rhosteps; rho_0 += rho_step, j++) {
+		for(j = 0; j < h->nb; j++) { rho_0 = h->profile[j]; 
 			//scan across all gamma values
 			for(g = g_start; g < g_stop; g += g_step) {
 			
 				//reset chi and scan across all radii 
 				chi = 0;
-//				#pragma omp parallel for
-//				for(k = 0; k < h->nb; k++) { r = h->radii[k];
-				for(r = 1; r < h->radius; r += r_step) {
+				#pragma omp parallel for
+				for(k = 0; k < h->nb; k++) { r = h->radii[k];
+
 					//compute the residual (actual density - expected)
 					residual = h->profile[i] - nfw(rho_0, rs, g, r);
+					
 					//square it
 					residual = pow(residual, 2);
 
@@ -295,6 +270,7 @@ void compute_error_volume(double g_start, double g_stop, double g_step,
 					chi += residual;
 
 				} //closes r scan
+				
 				if(TEST_MODE) {
 					if(chi < smallchi) {
 						smallchi = chi;
@@ -303,6 +279,7 @@ void compute_error_volume(double g_start, double g_stop, double g_step,
 						printf("g: %1.1f\tchi: %f\n", g, chi);
 					}*/
 				}			
+
 				//now we want to store the sum in the error volume
 				chi /= (dof - 1);
 				g_coord = (g - g_start) / g_step;
@@ -314,7 +291,6 @@ void compute_error_volume(double g_start, double g_stop, double g_step,
 
 	} //closes rs scan
 
-
 	//now lazy minimize by finding the smallest value in the error volume
 	smallest = errvol[0][0][0];
 	for(i = 0; i < rssteps; i++) { // i: rs
@@ -323,19 +299,19 @@ void compute_error_volume(double g_start, double g_stop, double g_step,
 				
 				if(errvol[i][j][k] < smallest && errvol[i][j][k] != 0) {
 					smallest = errvol[i][j][k];
-					best_rs = 1 + i * rs_step;
-					best_rho_0 = h->min_density + j * rho_step;
+					best_rs = h->profile[i];
+					best_rho_0 = h->radii[j];
 					best_g = g_start + k * g_step;
-
 				}
 			}
 		}
 	}
 
-
 	h->best_rs = best_rs;
 	h->best_rho_0 = best_rho_0;
 	h->best_g = best_g;
+	
+	printf("best g: %f\n", best_g);
 	
 	if(TEST_MODE) {
 		//see what values we got 
@@ -356,24 +332,16 @@ int main(int argc, char ** argv)
 	f = init(argc, argv);
 	create_halos(f, halos);
 
-	int i, livecount = 0; int deadcount = 0; int nbabove20count = 0;
-	#pragma omp parallel for shared(livecount, deadcount)
-	for(i = 13; i < 14; i++) {
-		if(halos[i].nb > 20) {
-			compute_error_volume(1, 4, 0.1, 20, 100, 100, &halos[i]);
-			nbabove20count++;
-		}
-		if(halos[i].best_g > 0.01) {
-			printf("halo %d best g: %f\n", i, halos[i].best_g);
-			livecount++;
-		} else if(halos[i].best_g == -1) {
-			deadcount++;
-		}
-	}
+	int i;
+	#pragma omp parallel for
+	for(i = 8; i < 9; i++) 
+		if(halos[i].nb > 20) 
+			compute_error_volume(1, 10, 0.1, &halos[i]);
+	
+/*	for(i = 0; i < halos[8].nb; i++) 
+		printf("%d %f\n", i, halos[8].profile[i]);
+*/	
 
-	printf("nonzero g count: %d\n", livecount);
-	printf("zero g count: %d\n", deadcount);
-	printf("nb > 20 count: %d\n", nbabove20count);
 	fclose(f);
 
 	//write
