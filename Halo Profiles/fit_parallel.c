@@ -7,7 +7,7 @@
 
 #define TEST_MODE 0
 #define MAX_BINS 50
-#define NUM_HALOS 1000//7152277
+#define NUM_HALOS 100//7152277
 #define PARTICLE_MASS 154966000 // Msun/h
 
 //HaloID ParentID Mass Radius Vmax X Y Z VX VY VZ NP N_Rbins PPBin R0 .. RN
@@ -356,27 +356,24 @@ int main(int argc, char ** argv)
 	f = init(argc, argv);
 	create_halos(f, halos);
 
-	int i, livecount = 0; int deadcount = 0; int nbabove20count = 0;
-	#pragma omp parallel for shared(livecount, deadcount)
-	for(i = 13; i < 14; i++) {
-		if(halos[i].nb > 20) {
-			compute_error_volume(1, 4, 0.1, 20, 100, 100, &halos[i]);
-			nbabove20count++;
-		}
-		if(halos[i].best_g > 0.01) {
-			printf("halo %d best g: %f\n", i, halos[i].best_g);
-			livecount++;
-		} else if(halos[i].best_g == -1) {
-			deadcount++;
+	int i; double total = 0;
+	#pragma omp parallel for shared(total)
+	for(i = 0; i < NUM_HALOS; i++) {
+		//count halos that have more than 20 bins
+		if(halos[i].nb > 1) {
+			compute_error_volume(0.1, 4, 0.01, 1, 10000, 10000, &halos[i]);
+			total += halos[i].best_g;
+			printf("halo %3d: best g: %.2f, rs: %f, rho_0: %f\n", i, halos[i].best_g, halos[i].best_rs, 
+										halos[i].best_rho_0);
+//			printf("%d %f\n", halos[i].nb, halos[i].best_g); //for output for plotting in gnuplot
 		}
 	}
 
-	printf("nonzero g count: %d\n", livecount);
-	printf("zero g count: %d\n", deadcount);
-	printf("nb > 20 count: %d\n", nbabove20count);
-	fclose(f);
+	total /= NUM_HALOS;
+	printf("mean gamma: %f\n", total);
+	
 
-	//write
+	fclose(f);
 
 	return 0;
 }
